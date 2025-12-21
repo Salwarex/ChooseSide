@@ -1,0 +1,15 @@
+name: ChooseSide
+version: '1.0'
+main: ru.vitalex.chooseSide.ChooseSide
+api-version: '1.21'
+prefix: ChooseSide
+authors: [ _Vitalex ]
+description: Plugin that adds choose on the first enter the server.
+website: bee-manity.ru
+commands:
+  choose:
+    aliases:
+      - chooseteam
+      - ct
+      - chooseside
+      - cs

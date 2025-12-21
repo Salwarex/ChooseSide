@@ -1,0 +1,10 @@
+language: "ru-RU" #en-EN, ru-RU
+
+database:
+  type: "SQLITE" #MYSQL, SQLITE
+  connection: "database.db"
+  #user:
+  #password:
+  synchronize-interval-seconds: 300
+
+version: 1

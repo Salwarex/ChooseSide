@@ -1,0 +1,14 @@
+package ru.vitalex.chooseSide.service;
+
+public enum RecordingStatistic {
+    BLOCKS_AMOUNT_DESTROYED,
+    BLOCKS_AMOUNT_PLACED,
+
+    ONLINE_HOURS_ABSOLUTE,
+
+    DEATHS_AMOUNT_BY_OTHER_SIDE,
+    DEATHS_AMOUNT_ABSOLUTE,
+
+    KILL_AMOUNT_OTHER_SIDE,
+    KILL_AMOUNT_ABSOLUTE;
+}
