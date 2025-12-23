@@ -5,6 +5,7 @@ database:
   connection: "database.db"
   #user:
   #password:
-  synchronize-interval-seconds: 300
+  synchronize-interval-seconds: 120
+registration-task-interval-seconds: 5
 
 version: 1

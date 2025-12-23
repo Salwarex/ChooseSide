@@ -64,6 +64,9 @@ public class ChooseInterface {
     }
 
     private static void confirm(Player player, Side side, ContainerInterface gui){
+        Registrator.pause(player);
+        player.closeInventory();
+
         Question confirmQuestion = new Question(PLUGIN, "confirm",
                 """
                        \
@@ -92,6 +95,7 @@ public class ChooseInterface {
                                         """);
                         QuestionnairePool pool = QuestionnairePool.getInstance();
                         pool.remove(pl);
+                        Registrator.unpause(pl);
                         gui.open(pl);
                     } else {
                         String name = side.getName();
@@ -117,11 +121,12 @@ public class ChooseInterface {
         ItemStackBuilder builder = new ItemStackBuilder(side.getSymbol(), 1);;
         builder.setLore(PLUGIN,
                 """
-                &7Нажав здесь, Вы присоединитесь к стороне "&e%s"! \
-                &fОписание: \
-                %s \
-                \
-                Обратите внимание, что Вы не сможете сменить сторону после нажатия!
+                &7Нажав здесь, Вы присоединитесь к стороне &e%s&7! 
+                &fОписание: 
+                 &8-=-=-=-=-=-=-
+                 %s 
+                 &8-=-=-=-=-=-=-
+                &7Обратите внимание, что Вы не сможете сменить сторону после нажатия!
                 """.formatted(side.getName(), normalizeString(side.getDescription(), 100)));
 
         builder.setName(PLUGIN, "&e%s".formatted(side.getName()));

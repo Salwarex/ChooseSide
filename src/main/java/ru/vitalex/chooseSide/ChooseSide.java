@@ -1,12 +1,15 @@
 package ru.vitalex.chooseSide;
 
+import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.vitalex.chooseSide.service.DataHandler;
 import ru.vitalex.chooseSide.service.pool.PlayerDataPool;
 import ru.vitalex.chooseSide.service.pool.SidePool;
 import ru.vitalex.chooseSide.userInterface.MainCommand;
 import ru.vitalex.chooseSide.userInterface.OpenInterfaceListener;
+import ru.vitalex.chooseSide.userInterface.Registrator;
 import ru.waxera.beeLib.BeeLib;
 
 import ru.waxera.beeLib.utils.data.database.DatabaseType;
@@ -17,11 +20,13 @@ public final class ChooseSide extends JavaPlugin {
 
     private static ChooseSide instance;
     private DataHandler dataHandler;
+    private LuckPerms luckPerms;
 
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
+        loadApi();
         BeeLib.setPlugin(instance, new Language[]{Language.ENGLISH, Language.RUSSIAN});
 
         Message.send(instance, "Plugin is running!");
@@ -38,12 +43,24 @@ public final class ChooseSide extends JavaPlugin {
 
         poolInit();
         new MainCommand();
+        Registrator.start();
         Bukkit.getPluginManager().registerEvents(new OpenInterfaceListener(), this);
     }
 
     private void poolInit(){
         SidePool.getInstance();
         PlayerDataPool.getInstance();
+
+        dataHandler.initSides();
+        dataHandler.initPlayerData();
+    }
+
+    private void loadApi(){
+        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+        if (provider == null) {
+            throw new RuntimeException("LuckPerms не установлен или не загружен!");
+        }
+        luckPerms = provider.getProvider();
     }
 
 
@@ -54,4 +71,6 @@ public final class ChooseSide extends JavaPlugin {
     public DataHandler getDataHandler(){
         return dataHandler;
     }
+
+    public LuckPerms getLuckPerms() { return luckPerms; }
 }

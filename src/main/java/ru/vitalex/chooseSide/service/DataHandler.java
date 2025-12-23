@@ -30,25 +30,26 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
         if (type == DatabaseType.SQLITE || type == DatabaseType.MYSQL){
             database.createTable("sides",
                     "uuid VARCHAR(36) PRIMARY KEY NOT NULL," +
-                            "name VARCHAR(64) INTEGER NOT NULL," +
+                            "name VARCHAR(64) NOT NULL," +
                             "description TEXT NOT NULL," +
                             "symbol TEXT," +
                             "active INTEGER NOT NULL DEFAULT 1," +
-                            "created_at " + dateTimeType + " PRIMARY KEY NOT NULL"
+                            "prefix VARCHAR(10) NOT NULL, " +
+                            "created_at " + dateTimeType + " NOT NULL"
             );
 
             database.createTable("players",
-                    "uuid VARCHAR(36) PRIMARY KEY NOT NULL," +
-                            "side_uuid VARCHAR(36) NOT NULL," +
-                            "chose_at " + dateTimeType + " PRIMARY KEY NOT NULL"+
+                    "uuid VARCHAR(36) PRIMARY KEY NOT NULL, " +
+                            "side_uuid VARCHAR(36) NOT NULL, " +
+                            "chose_at " + dateTimeType + " NOT NULL, "+
                             "FOREIGN KEY (side_uuid) REFERENCES sides(uuid)"
             );
 
             database.createTable("stats",
-                    "side_uuid INTEGER NOT NULL," +
-                            "statistic VARCHAR(64) NOT NULL," +
-                            "value REAL NOT NULL DEFAULT 0" +
-                            "PRIMARY KEY (side_uuid, statistic)," +
+                    "side_uuid VARCHAR(36) NOT NULL, " +
+                            "statistic VARCHAR(64) NOT NULL, " +
+                            "value REAL NOT NULL DEFAULT 0, " +
+                            "PRIMARY KEY (side_uuid, statistic), " +
                             "FOREIGN KEY (side_uuid) REFERENCES sides(uuid)"
             );
         }
@@ -65,21 +66,23 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                         "name",
                         "description",
                         "symbol",
+                        "prefix",
                         "created_at"
                 },
                 "sides",
-                new QueryWherePair(LogicalOperator.AND, "active", 1));
+                new QueryWherePair(null, "active", 1));
 
         if(dataset != null){
             for(ArrayList<Object> object : dataset){
-                UUID uuid = (UUID) object.getFirst();
+                UUID uuid = UUID.fromString((String) object.getFirst());
                 String name = (String) object.get(1);
                 String description = (String) object.get(2);
                 Material symbol = Material.valueOf((String) object.get(3));
-                String createdAtStr = ((String) object.get(4));
+                String prefix = ((String) object.get(4));
+                String createdAtStr = ((String) object.get(5));
                 LocalDateTime createdAt = LocalDateTime.parse(createdAtStr, DATE_TIME_FORMATTER);
 
-                Side side = new Side(uuid, name, description, symbol, true, createdAt, null);
+                Side side = new Side(uuid, name, description, symbol, prefix, true, createdAt, null);
                 loadSidesStatistics(side);
             }
         }
@@ -91,8 +94,8 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                         "statistic",
                         "value"
                 },
-                "sides",
-                new QueryWherePair(LogicalOperator.AND, "side_uuid", side.getUuid()));
+                "stats",
+                new QueryWherePair(null, "side_uuid", side.getUuid()));
 
         SideStatistics stats = side.getStatistics();
 
@@ -112,11 +115,12 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
         UUID uuid = side.getUuid();
 
         database.insert("sides",
-                "uuid, name, description, symbol, created_at",
+                "uuid, name, description, symbol, prefix, created_at",
                 uuid.toString(),
                 side.getName(),
                 side.getDescription(),
                 side.getSymbol(),
+                side.getPrefix(),
                 createdAt
         );
 
@@ -152,6 +156,9 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                 } else if (variable == SideVariable.SYMBOL) {
                     database.updateData("sides", "symbol", side.getSymbol(),
                             whereSide);
+                } else if (variable == SideVariable.PREFIX) {
+                    database.updateData("sides", "symbol", side.getPrefix(),
+                            whereSide);
                 }
             }
             lastChangedSide.clear();
@@ -181,7 +188,7 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
 
         if(dataset != null){
             for(ArrayList<Object> object : dataset){
-                UUID uuid = (UUID) object.getFirst();
+                UUID uuid = UUID.fromString((String) object.getFirst());
                 Side side = SidePool.getInstance().get(UUID.fromString((String) object.get(1)));
                 String choseAtStr = ((String) object.get(2));
                 LocalDateTime choseAt = LocalDateTime.parse(choseAtStr, DATE_TIME_FORMATTER);

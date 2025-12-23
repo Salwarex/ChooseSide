@@ -6,6 +6,7 @@ prefix: ChooseSide
 authors: [ _Vitalex ]
 description: Plugin that adds choose on the first enter the server.
 website: bee-manity.ru
+depend: [ BeeLib, LuckPerms ]
 commands:
   choose:
     aliases:

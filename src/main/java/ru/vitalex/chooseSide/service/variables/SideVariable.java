@@ -4,5 +4,6 @@ public enum SideVariable {
     NAME,
     DESCRIPTION,
     SYMBOL,
-    ACTIVE
+    ACTIVE,
+    PREFIX
 }

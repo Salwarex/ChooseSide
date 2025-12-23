@@ -15,6 +15,7 @@ public class Side {
     private String name;
     private String description;
     private Material symbol;
+    private String prefix;
     private boolean active;
     private final LocalDateTime createdAt;
     private final SideStatistics statistics;
@@ -27,6 +28,7 @@ public class Side {
          String name,
          String description,
          Material symbol,
+         String prefix,
          boolean active,
          LocalDateTime createdAt,
          SideStatistics statistics
@@ -35,6 +37,7 @@ public class Side {
         this.name = name;
         this.description = description;
         this.symbol = symbol;
+        this.prefix = prefix;
         this.active = active;
         this.createdAt = createdAt;
         this.statistics = (statistics == null ? SideStatistics.create(this) : statistics);
@@ -42,11 +45,11 @@ public class Side {
         pool.add(uuid, this);
     }
 
-    public static Side create(String name, String description, Material symbol){
+    public static Side create(String name, String description, Material symbol, String prefix){
         UUID uuid = UUID.randomUUID();
         LocalDateTime time = LocalDateTime.now();
 
-        Side result = new Side(uuid, name, description, symbol, true, time, null);
+        Side result = new Side(uuid, name, description, symbol, prefix, true, time, null);
         ChooseSide.getInstance().getDataHandler().insertSide(result);
 
         return result;
@@ -106,5 +109,13 @@ public class Side {
 
     public Set<SideVariable> getLastSessionChanged() {
         return lastSessionChanged;
+    }
+
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
     }
 }

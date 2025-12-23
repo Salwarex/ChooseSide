@@ -1,5 +1,8 @@
 package ru.vitalex.chooseSide.service;
 
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
 import org.bukkit.entity.Player;
 import ru.vitalex.chooseSide.ChooseSide;
 import ru.vitalex.chooseSide.service.pool.PlayerDataPool;
@@ -34,7 +37,7 @@ public class PlayerData {
                         side != null ? LocalDateTime.now() : null
                 );
         ChooseSide.getInstance().getDataHandler().insertPlayerData(result);
-
+        setPrefix(player, side);
         return result;
     }
 
@@ -59,5 +62,16 @@ public class PlayerData {
 
     public Set<PlayerDataVariables> getLastSessionChanged() {
         return lastSessionChanged;
+    }
+
+    public static void setPrefix(Player player, Side side){
+        LuckPerms luckPerms = ChooseSide.getInstance().getLuckPerms();
+        User user = luckPerms.getUserManager().getUser(player.getUniqueId());
+        Node prefixNode = Node.builder("suffix.1.%s".formatted(side.getPrefix()))
+                .withContext("server", "global")
+                .build();
+        assert user != null;
+        user.data().add(prefixNode);
+        luckPerms.getUserManager().saveUser(user);
     }
 }
