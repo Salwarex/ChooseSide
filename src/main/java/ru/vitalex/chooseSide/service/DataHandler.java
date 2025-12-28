@@ -35,7 +35,7 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                             "symbol TEXT," +
                             "active INTEGER NOT NULL DEFAULT 1," +
                             "prefix VARCHAR(10) NOT NULL, " +
-                            "created_at " + dateTimeType + " NOT NULL"
+                            "created_at " + dateTimeType + " NOT NULL, "
             );
 
             database.createTable("players",
