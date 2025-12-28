@@ -19,6 +19,9 @@ public class Side {
     private boolean active;
     private final LocalDateTime createdAt;
     private final SideStatistics statistics;
+    private String dsrvRoleId;
+    private String welcomeMessage;
+    private double balanceCoef;
 
     private static final SidePool pool = SidePool.getInstance();
 
@@ -31,7 +34,10 @@ public class Side {
          String prefix,
          boolean active,
          LocalDateTime createdAt,
-         SideStatistics statistics
+         SideStatistics statistics,
+         String dsrvRoleId,
+         String welcomeMessage,
+         double balanceCoef
     ) {
         this.uuid = uuid;
         this.name = name;
@@ -41,15 +47,18 @@ public class Side {
         this.active = active;
         this.createdAt = createdAt;
         this.statistics = (statistics == null ? SideStatistics.create(this) : statistics);
+        this.dsrvRoleId = dsrvRoleId;
+        this.welcomeMessage = welcomeMessage;
+        this.balanceCoef = balanceCoef;
 
         pool.add(uuid, this);
     }
 
-    public static Side create(String name, String description, Material symbol, String prefix){
+    public static Side create(String name, String description, Material symbol, String prefix, double balanceCoef){
         UUID uuid = UUID.randomUUID();
         LocalDateTime time = LocalDateTime.now();
 
-        Side result = new Side(uuid, name, description, symbol, prefix, true, time, null);
+        Side result = new Side(uuid, name, description, symbol, prefix, true, time, null, null, null, balanceCoef);
         ChooseSide.getInstance().getDataHandler().insertSide(result);
 
         return result;
@@ -113,6 +122,33 @@ public class Side {
 
     public String getPrefix() {
         return prefix;
+    }
+
+    public String getDsrvRoleId() {
+        return dsrvRoleId;
+    }
+
+    public void setDsrvRoleId(String dsrvRoleId) {
+        this.dsrvRoleId = dsrvRoleId;
+        lastSessionChanged.add(SideVariable.DSRV_ROLE_ID);
+    }
+
+    public String getWelcomeMessage() {
+        return welcomeMessage;
+    }
+
+    public void setWelcomeMessage(String welcomeMessage) {
+        this.welcomeMessage = welcomeMessage;
+        lastSessionChanged.add(SideVariable.WELCOME_MESSAGE);
+    }
+
+    public double getBalanceCoef() {
+        return balanceCoef;
+    }
+
+    public void setBalanceCoef(double balanceCoef) {
+        this.balanceCoef = balanceCoef;
+        lastSessionChanged.add(SideVariable.BALANCE_COEF);
     }
 
     public void setPrefix(String prefix) {

@@ -35,13 +35,18 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                             "symbol TEXT," +
                             "active INTEGER NOT NULL DEFAULT 1," +
                             "prefix VARCHAR(10) NOT NULL, " +
-                            "created_at " + dateTimeType + " NOT NULL, "
+                            "created_at " + dateTimeType + " NOT NULL, " +
+                            "dsrv_role_id VARCHAR(32), " +
+                            "welcome_message TEXT, " +
+                            "balance_coef REAL NOT NULL, "
             );
 
             database.createTable("players",
                     "uuid VARCHAR(36) PRIMARY KEY NOT NULL, " +
                             "side_uuid VARCHAR(36) NOT NULL, " +
-                            "chose_at " + dateTimeType + " NOT NULL, "+
+                            "chose_at " + dateTimeType + " NOT NULL, " +
+                            "change_side_tokens INTEGER NOT NULL DEFAULT 0, "+
+                            "already_took_online_tokens " + dateTimeType + ", " +
                             "FOREIGN KEY (side_uuid) REFERENCES sides(uuid)"
             );
 
@@ -67,7 +72,10 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                         "description",
                         "symbol",
                         "prefix",
-                        "created_at"
+                        "created_at",
+                        "dsrv_role_id",
+                        "welcome_message",
+                        "balance_coef"
                 },
                 "sides",
                 new QueryWherePair(null, "active", 1));
@@ -81,8 +89,11 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                 String prefix = ((String) object.get(4));
                 String createdAtStr = ((String) object.get(5));
                 LocalDateTime createdAt = LocalDateTime.parse(createdAtStr, DATE_TIME_FORMATTER);
+                String dsrvRoleId = (String) object.get(6);
+                String welcomeMessage = (String) object.get(7);
+                double balanceCoef = (double) object.get(8);
 
-                Side side = new Side(uuid, name, description, symbol, prefix, true, createdAt, null);
+                Side side = new Side(uuid, name, description, symbol, prefix, true, createdAt, null, dsrvRoleId, welcomeMessage, balanceCoef);
                 loadSidesStatistics(side);
             }
         }
@@ -115,13 +126,16 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
         UUID uuid = side.getUuid();
 
         database.insert("sides",
-                "uuid, name, description, symbol, prefix, created_at",
+                "uuid, name, description, symbol, prefix, created_at, dsrv_role_id, welcome_message, balance_coef",
                 uuid.toString(),
                 side.getName(),
                 side.getDescription(),
                 side.getSymbol(),
                 side.getPrefix(),
-                createdAt
+                createdAt,
+                side.getDsrvRoleId(),
+                side.getWelcomeMessage(),
+                side.getBalanceCoef()
         );
 
         for(RecordingStatistic stat : RecordingStatistic.values()){
@@ -159,6 +173,15 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                 } else if (variable == SideVariable.PREFIX) {
                     database.updateData("sides", "symbol", side.getPrefix(),
                             whereSide);
+                } else if (variable == SideVariable.DSRV_ROLE_ID) {
+                    database.updateData("sides", "dsrv_role_id", side.getDsrvRoleId(),
+                            whereSide);
+                } else if (variable == SideVariable.WELCOME_MESSAGE) {
+                    database.updateData("sides", "welcome_message", side.getWelcomeMessage(),
+                            whereSide);
+                } else if (variable == SideVariable.BALANCE_COEF) {
+                    database.updateData("sides", "balance_coef", side.getBalanceCoef(),
+                            whereSide);
                 }
             }
             lastChangedSide.clear();
@@ -182,7 +205,9 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                 new String[]{
                         "uuid",
                         "side_uuid",
-                        "chose_at"
+                        "chose_at",
+                        "change_side_tokens",
+                        "already_took_online_tokens"
                 },
                 "players");
 
@@ -192,8 +217,10 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                 Side side = SidePool.getInstance().get(UUID.fromString((String) object.get(1)));
                 String choseAtStr = ((String) object.get(2));
                 LocalDateTime choseAt = LocalDateTime.parse(choseAtStr, DATE_TIME_FORMATTER);
+                int changeSideTokens = (int) object.get(3);
+                int alreadyTookOnlineTokens = (int) object.get(4);
 
-                new PlayerData(uuid, side, choseAt);
+                new PlayerData(uuid, side, choseAt, changeSideTokens, alreadyTookOnlineTokens);
                 loadSidesStatistics(side);
             }
         }
@@ -206,10 +233,12 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
         UUID uuid = playerData.getUuid();
 
         database.insert("players",
-                "uuid, side_uuid, chose_at",
+                "uuid, side_uuid, chose_at, change_side_tokens, already_took_online_tokens",
                 uuid.toString(),
                 playerData.getSide().getUuid().toString(),
-                choseAt
+                choseAt,
+                playerData.getChangeSideTokens(),
+                playerData.getAlreadyTookOnlineTokens()
         );
     }
 
@@ -224,6 +253,14 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
             for(PlayerDataVariables variable : lastChangedSide){
                 if(variable == PlayerDataVariables.SIDE){
                     database.updateData("players", "side_uuid", playerData.getSide().getUuid().toString(),
+                            whereSide);
+                }
+                else if(variable == PlayerDataVariables.TOKENS){
+                    database.updateData("players", "change_side_tokens", playerData.getChangeSideTokens(),
+                            whereSide);
+                }
+                else if(variable == PlayerDataVariables.ALREADY_TOOK_TOKENS){
+                    database.updateData("players", "already_took_online_tokens", playerData.getAlreadyTookOnlineTokens(),
                             whereSide);
                 }
             }

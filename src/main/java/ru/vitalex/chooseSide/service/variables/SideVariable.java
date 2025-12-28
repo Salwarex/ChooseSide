@@ -5,5 +5,8 @@ public enum SideVariable {
     DESCRIPTION,
     SYMBOL,
     ACTIVE,
-    PREFIX
+    PREFIX,
+    DSRV_ROLE_ID,
+    WELCOME_MESSAGE,
+    BALANCE_COEF
 }

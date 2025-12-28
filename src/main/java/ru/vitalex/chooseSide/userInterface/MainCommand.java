@@ -51,10 +51,11 @@ public class MainCommand extends AbstractCommand {
 
             String name = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
 
-            Side.create(name, " ", mainHand.getType(), prefix);
+            Side.create(name, " ", mainHand.getType(), prefix, 0.5);
             Message.send(null, sender, "&aSide successfully created!");
             return;
         }
+
         Message.send(null, sender, "&cUnknown command!");
     }
 

@@ -15,14 +15,18 @@ public class PlayerData {
     private final UUID uuid;
     private Side side;
     private LocalDateTime choseAt;
+    private int changeSideTokens;
+    private int alreadyTookOnlineTokens;
     private static final PlayerDataPool pool = PlayerDataPool.getInstance();
 
     private final Set<PlayerDataVariables> lastSessionChanged = new HashSet<>();
 
-    PlayerData(UUID uuid, Side side, LocalDateTime choseAt){
+    PlayerData(UUID uuid, Side side, LocalDateTime choseAt, int changeSideTokens, int alreadyTookOnlineTokens){
         this.uuid = uuid;
         this.side = side;
         this.choseAt = choseAt;
+        this.changeSideTokens = changeSideTokens;
+        this.alreadyTookOnlineTokens = alreadyTookOnlineTokens;
 
         pool.add(uuid, this);
     }
@@ -34,7 +38,8 @@ public class PlayerData {
                 new PlayerData(
                         player.getUniqueId(),
                         side,
-                        side != null ? LocalDateTime.now() : null
+                        side != null ? LocalDateTime.now() : null,
+                        0, 0
                 );
         ChooseSide.getInstance().getDataHandler().insertPlayerData(result);
         setPrefix(player, side);
@@ -62,6 +67,28 @@ public class PlayerData {
 
     public Set<PlayerDataVariables> getLastSessionChanged() {
         return lastSessionChanged;
+    }
+
+    public int getChangeSideTokens() {
+        return changeSideTokens;
+    }
+
+    public void addTokens(int dTokens){
+        this.setChangeSideTokens(this.changeSideTokens + dTokens);
+    }
+
+    public void setChangeSideTokens(int changeSideTokens) {
+        this.changeSideTokens = changeSideTokens;
+        lastSessionChanged.add(PlayerDataVariables.TOKENS);
+    }
+
+    public int getAlreadyTookOnlineTokens() {
+        return alreadyTookOnlineTokens;
+    }
+
+    public void setAlreadyTookOnlineTokens(int alreadyTookOnlineTokens) {
+        this.alreadyTookOnlineTokens = alreadyTookOnlineTokens;
+        lastSessionChanged.add(PlayerDataVariables.ALREADY_TOOK_TOKENS);
     }
 
     public static void setPrefix(Player player, Side side){
