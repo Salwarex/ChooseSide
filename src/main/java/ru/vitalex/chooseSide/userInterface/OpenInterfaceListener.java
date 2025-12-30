@@ -24,7 +24,7 @@ public class OpenInterfaceListener implements Listener {
     public void onMove(PlayerMoveEvent e){
         Player player = e.getPlayer();
         PlayerData playerData = POOL.get(player.getUniqueId());
-        if(playerData == null) e.setCancelled(true);
+        if(playerData == null && !player.isOp()) e.setCancelled(true);
     }
 
 }

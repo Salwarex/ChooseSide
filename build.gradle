@@ -12,6 +12,7 @@ repositories {
         name = "spigotmc-repo"
         url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
     }
+    maven { url 'https://nexus.scarsz.me/content/repositories/public/' }
     maven { url 'https://jitpack.io' }
 }
 
@@ -19,6 +20,8 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT")
     compileOnly("net.luckperms:api:5.4")
     implementation 'com.github.Salwarex:BeeLib:a08c40cf1c'
+    compileOnly 'com.discordsrv:discordsrv:1.30.3'
+    annotationProcessor 'com.discordsrv:discordsrv:1.30.3'
 }
 
 tasks {

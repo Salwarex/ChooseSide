@@ -1,9 +1,12 @@
 package ru.vitalex.chooseSide.service.pool;
 
+import github.scarsz.discordsrv.util.PlayerUtil;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.vitalex.chooseSide.ChooseSide;
 import ru.vitalex.chooseSide.service.PlayerData;
+import ru.waxera.beeLib.BeeLib;
 import ru.waxera.beeLib.utils.data.pools.map.IrreplaceableMapPool;
+import ru.waxera.beeLib.utils.player.PlayerPool;
 
 import java.util.Set;
 import java.util.UUID;
@@ -42,4 +45,17 @@ public class PlayerDataPool extends IrreplaceableMapPool<UUID, PlayerData> {
                         300));
         updateTaskStarted = true;
     }
+
+    public static String getPlayerName(UUID uuid){
+        return PlayerPool.getInstance().get(uuid).getName();
+    }
+
+//    public static String getUuidByPlayerName(String playerName){ //всё очень плохо в BeeLib, пофиксить потом
+//        PlayerData resultPd;
+//        for(String name : PlayerPool.getInstance().){
+//            if(name.equalsIgnoreCase(playerName)){
+//                resultPd = PlayerPool.getInstance().get()
+//            }
+//        }
+//    }
 }

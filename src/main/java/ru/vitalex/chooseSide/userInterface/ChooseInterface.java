@@ -5,8 +5,10 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.vitalex.chooseSide.ChooseSide;
+import ru.vitalex.chooseSide.service.DataHandler;
 import ru.vitalex.chooseSide.service.PlayerData;
 import ru.vitalex.chooseSide.service.Side;
+import ru.vitalex.chooseSide.service.pool.PlayerDataPool;
 import ru.vitalex.chooseSide.service.pool.SidePool;
 import ru.waxera.beeLib.utils.gui.container.ContainerInterface;
 import ru.waxera.beeLib.utils.gui.container.SinglePageInterface;
@@ -24,18 +26,19 @@ public class ChooseInterface {
 
 
     public static void open(Player player){
+        SidePool pool = SidePool.getInstance();
+        PlayerData playerData = PlayerDataPool.getInstance().get(player.getUniqueId());
+
+        List<Side> sides = pool.keysList(playerData != null ? playerData.getSide().getUuid() : null);
+
+        selectSideInterface(player, sides);
+    }
+
+    private static void selectSideInterface(Player player, List<Side> sides) {
         int size = 27;
         SinglePageInterface gui = new SinglePageInterface(null,
                 StringUtils.format("Выберите свою сторону!", PLUGIN),
                 size, false);
-
-        SidePool pool = SidePool.getInstance();
-
-        Set<UUID> keys = pool.keys();
-        List<Side> sides = new ArrayList<>();
-        for(UUID uuid : keys){
-            sides.add(pool.get(uuid));
-        }
 
         if(sides.size() == 2){
             ArrayList<Integer> bgs = new ArrayList<>();
@@ -63,9 +66,29 @@ public class ChooseInterface {
         gui.open(player);
     }
 
+
+    private static boolean isAvailableByBalance(Side side){
+        if(side == null) throw new RuntimeException("Side is null!");
+        DataHandler dataHandler = ChooseSide.getInstance().getDataHandler();
+        int sumSide = dataHandler.getRegisteredPlayers(side);
+        double balanceCoef = side.getBalanceCoef();
+        double permissibleSuperiority = ChooseSide.getInstance().getConfig().getDouble("permissible_superiority", 0.05);
+        int sumAll = dataHandler.getCount("players");
+
+        if(sumSide == 0 || sumAll == 0) return true;
+        return !(((double) sumSide / sumAll) > (balanceCoef + permissibleSuperiority));
+    }
+
     private static void confirm(Player player, Side side, ContainerInterface gui){
-        Registrator.pause(player);
         player.closeInventory();
+
+        if(!isAvailableByBalance(side)) {
+            Message.send(PLUGIN, player, "&cВы не можете вступить за эту сторону. Слишком большой перевес игроков!");
+            gui.open(player);
+            return;
+        }
+
+        Registrator.pause(player);
 
         Question confirmQuestion = new Question(PLUGIN, "confirm",
                 """
@@ -107,7 +130,8 @@ public class ChooseInterface {
                                         \
                                         \s
                                         """.formatted(name));
-                        PlayerData.create(pl, side);
+                        if(!PlayerDataPool.getInstance().contains(pl.getUniqueId())) PlayerData.create(pl, side);
+                        else PlayerDataPool.getInstance().get(pl.getUniqueId()).changeSide(side);
                     }
                 },
                 Sound.BLOCK_NOTE_BLOCK_PLING,
@@ -118,16 +142,26 @@ public class ChooseInterface {
     }
 
     private static ItemStack createSideIs(Side side){
+        DataHandler dataHandler = ChooseSide.getInstance().getDataHandler();
+        int sumSide = dataHandler.getRegisteredPlayers(side);
         ItemStackBuilder builder = new ItemStackBuilder(side.getSymbol(), 1);;
         builder.setLore(PLUGIN,
                 """
-                &7Нажав здесь, Вы присоединитесь к стороне &e%s&7! 
+                %s
+                &fУчастников: &e%d
                 &fОписание: 
                  &8-=-=-=-=-=-=-
                  %s 
                  &8-=-=-=-=-=-=-
                 &7Обратите внимание, что Вы не сможете сменить сторону после нажатия!
-                """.formatted(side.getName(), normalizeString(side.getDescription(), 100)));
+                """.formatted(
+                        (isAvailableByBalance(side) ?
+                                "&7Присоединиться к стороне &e%s&7!".formatted(side.getName())
+                                : "&cНевозможно присоединиться к этой стороне! Слишком большой перевес игроков."),
+                        sumSide,
+                        normalizeString(side.getDescription(),
+                                100
+                        )));
 
         builder.setName(PLUGIN, "&e%s".formatted(side.getName()));
         return builder.get();

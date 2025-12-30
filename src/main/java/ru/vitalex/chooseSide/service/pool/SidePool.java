@@ -5,6 +5,8 @@ import ru.vitalex.chooseSide.ChooseSide;
 import ru.vitalex.chooseSide.service.Side;
 import ru.waxera.beeLib.utils.data.pools.map.IrreplaceableMapPool;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,6 +28,18 @@ public class SidePool extends IrreplaceableMapPool<UUID, Side> {
         return storage.keySet();
     }
 
+    public List<Side> keysList(UUID exclude){
+        List<Side> sides = new ArrayList<>();
+        for(UUID uuid : keys()){
+            if(exclude != null){
+                if(exclude == uuid) continue;
+            }
+            sides.add(this.get(uuid));
+        }
+
+        return sides;
+    }
+
     private void startUpdateTask(){
         BukkitRunnable runnable = new BukkitRunnable() {
             @Override
@@ -41,5 +55,9 @@ public class SidePool extends IrreplaceableMapPool<UUID, Side> {
                 20L * ChooseSide.getInstance().getConfig().getInt("database.synchronize-interval-seconds",
                         300));
         updateTaskStarted = true;
+    }
+
+    public static String getSideName(UUID uuid){
+        return getInstance().get(uuid).getName();
     }
 }

@@ -1,9 +1,11 @@
 package ru.vitalex.chooseSide.service;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import ru.vitalex.chooseSide.ChooseSide;
 import ru.vitalex.chooseSide.service.pool.SidePool;
-import ru.vitalex.chooseSide.service.variables.PlayerDataVariables;
+import ru.vitalex.chooseSide.service.variables.PlayerDataVariable;
 import ru.vitalex.chooseSide.service.variables.SideVariable;
 import ru.waxera.beeLib.utils.data.database.DatabaseType;
 import ru.waxera.beeLib.utils.data.database.query.LogicalOperator;
@@ -38,15 +40,19 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                             "created_at " + dateTimeType + " NOT NULL, " +
                             "dsrv_role_id VARCHAR(32), " +
                             "welcome_message TEXT, " +
-                            "balance_coef REAL NOT NULL, "
+                            "balance_coef REAL NOT NULL, " +
+                            "base_world INTEGER NOT NULL, " +
+                            "base_x INTEGER NOT NULL, " +
+                            "base_y INTEGER NOT NULL, " +
+                            "base_z INTEGER NOT NULL "
             );
 
             database.createTable("players",
                     "uuid VARCHAR(36) PRIMARY KEY NOT NULL, " +
-                            "side_uuid VARCHAR(36) NOT NULL, " +
+                            "side_uuid VARCHAR(36), " +
                             "chose_at " + dateTimeType + " NOT NULL, " +
                             "change_side_tokens INTEGER NOT NULL DEFAULT 0, "+
-                            "already_took_online_tokens " + dateTimeType + ", " +
+                            "already_took_online_tokens INTEGER, " +
                             "FOREIGN KEY (side_uuid) REFERENCES sides(uuid)"
             );
 
@@ -64,6 +70,11 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
         return database.count(table);
     }
 
+    public int getRegisteredPlayers(Side side){
+        if(side == null) return -1;
+        return database.count("players", new QueryWherePair(null, "side_uuid", side.getUuid()));
+    }
+
     public void initSides(){
         ArrayList<ArrayList<Object>> dataset = database.getDataObjects("*",
                 new String[]{
@@ -75,7 +86,11 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                         "created_at",
                         "dsrv_role_id",
                         "welcome_message",
-                        "balance_coef"
+                        "balance_coef",
+                        "base_world",
+                        "base_x",
+                        "base_y",
+                        "base_z"
                 },
                 "sides",
                 new QueryWherePair(null, "active", 1));
@@ -92,8 +107,13 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                 String dsrvRoleId = (String) object.get(6);
                 String welcomeMessage = (String) object.get(7);
                 double balanceCoef = (double) object.get(8);
+                String baseWorld = (String) object.get(9);
+                int baseX = (int) object.get(10);
+                int baseY = (int) object.get(11);
+                int baseZ = (int) object.get(12);
 
-                Side side = new Side(uuid, name, description, symbol, prefix, true, createdAt, null, dsrvRoleId, welcomeMessage, balanceCoef);
+                Side side = new Side(uuid, name, description, symbol, prefix, true, createdAt, null,
+                        dsrvRoleId, welcomeMessage, balanceCoef, new Location(Bukkit.getWorld(baseWorld), baseX, baseY, baseZ));
                 loadSidesStatistics(side);
             }
         }
@@ -124,9 +144,11 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
 
         String createdAt = DATE_TIME_FORMATTER.format(side.getCreatedAt());
         UUID uuid = side.getUuid();
+        Location location = side.getBaseLocation();
 
         database.insert("sides",
-                "uuid, name, description, symbol, prefix, created_at, dsrv_role_id, welcome_message, balance_coef",
+                "uuid, name, description, symbol, prefix, created_at, dsrv_role_id, welcome_message, balance_coef, " +
+                        "base_world, base_x, base_y, base_z",
                 uuid.toString(),
                 side.getName(),
                 side.getDescription(),
@@ -135,7 +157,11 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                 createdAt,
                 side.getDsrvRoleId(),
                 side.getWelcomeMessage(),
-                side.getBalanceCoef()
+                side.getBalanceCoef(),
+                location.getWorld().getName(),
+                location.getBlockX(),
+                location.getBlockY(),
+                location.getBlockZ()
         );
 
         for(RecordingStatistic stat : RecordingStatistic.values()){
@@ -182,6 +208,18 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
                 } else if (variable == SideVariable.BALANCE_COEF) {
                     database.updateData("sides", "balance_coef", side.getBalanceCoef(),
                             whereSide);
+                } else if (variable == SideVariable.BASE_LOCATION) {
+                    Location location = side.getBaseLocation();
+
+                    database.updateData("sides", "base_world", location.getWorld().getName(),
+                            whereSide);
+                    database.updateData("sides", "base_x", location.getBlockX(),
+                            whereSide);
+                    database.updateData("sides", "base_y", location.getBlockY(),
+                            whereSide);
+                    database.updateData("sides", "base_z", location.getBlockZ(),
+                            whereSide);
+
                 }
             }
             lastChangedSide.clear();
@@ -247,19 +285,19 @@ public class DataHandler extends ru.waxera.beeLib.utils.data.DataHandler {
 
         QueryWherePair whereSide = new QueryWherePair(null, "uuid", playerData.getUuid());
 
-        Set<PlayerDataVariables> lastChangedSide = playerData.getLastSessionChanged();
+        Set<PlayerDataVariable> lastChangedSide = playerData.getLastSessionChanged();
 
         if(lastChangedSide != null){
-            for(PlayerDataVariables variable : lastChangedSide){
-                if(variable == PlayerDataVariables.SIDE){
+            for(PlayerDataVariable variable : lastChangedSide){
+                if(variable == PlayerDataVariable.SIDE){
                     database.updateData("players", "side_uuid", playerData.getSide().getUuid().toString(),
                             whereSide);
                 }
-                else if(variable == PlayerDataVariables.TOKENS){
+                else if(variable == PlayerDataVariable.TOKENS){
                     database.updateData("players", "change_side_tokens", playerData.getChangeSideTokens(),
                             whereSide);
                 }
-                else if(variable == PlayerDataVariables.ALREADY_TOOK_TOKENS){
+                else if(variable == PlayerDataVariable.ALREADY_TOOK_TOKENS){
                     database.updateData("players", "already_took_online_tokens", playerData.getAlreadyTookOnlineTokens(),
                             whereSide);
                 }

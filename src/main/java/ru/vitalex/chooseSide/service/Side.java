@@ -1,6 +1,9 @@
 package ru.vitalex.chooseSide.service;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import ru.vitalex.chooseSide.ChooseSide;
 import ru.vitalex.chooseSide.service.pool.SidePool;
 import ru.vitalex.chooseSide.service.variables.SideVariable;
@@ -10,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class Side {
+public class Side{
     private final UUID uuid;
     private String name;
     private String description;
@@ -22,6 +25,7 @@ public class Side {
     private String dsrvRoleId;
     private String welcomeMessage;
     private double balanceCoef;
+    private Location baseLocation;
 
     private static final SidePool pool = SidePool.getInstance();
 
@@ -37,7 +41,8 @@ public class Side {
          SideStatistics statistics,
          String dsrvRoleId,
          String welcomeMessage,
-         double balanceCoef
+         double balanceCoef,
+         Location baseLocation
     ) {
         this.uuid = uuid;
         this.name = name;
@@ -50,15 +55,17 @@ public class Side {
         this.dsrvRoleId = dsrvRoleId;
         this.welcomeMessage = welcomeMessage;
         this.balanceCoef = balanceCoef;
+        this.baseLocation = baseLocation;
 
         pool.add(uuid, this);
     }
 
-    public static Side create(String name, String description, Material symbol, String prefix, double balanceCoef){
+    public static Side create(String name, String description, Material symbol, String prefix, double balanceCoef, Location baseLocation){
         UUID uuid = UUID.randomUUID();
         LocalDateTime time = LocalDateTime.now();
 
-        Side result = new Side(uuid, name, description, symbol, prefix, true, time, null, null, null, balanceCoef);
+        Side result = new Side(uuid, name, description, symbol, prefix, true, time, null, null,
+                null, balanceCoef, baseLocation == null ? Bukkit.getWorlds().getFirst().getSpawnLocation() : baseLocation);
         ChooseSide.getInstance().getDataHandler().insertSide(result);
 
         return result;
@@ -133,6 +140,11 @@ public class Side {
         lastSessionChanged.add(SideVariable.DSRV_ROLE_ID);
     }
 
+    public void teleportToBase(Player player){
+        player.teleport(baseLocation);
+        player.setBedSpawnLocation(baseLocation);
+    }
+
     public String getWelcomeMessage() {
         return welcomeMessage;
     }
@@ -153,5 +165,14 @@ public class Side {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+        lastSessionChanged.add(SideVariable.PREFIX);
+    }
+
+    public Location getBaseLocation() {
+        return baseLocation;
+    }
+
+    public void setBaseLocation(Location baseLocation) {
+        this.baseLocation = baseLocation;
     }
 }

@@ -1,5 +1,6 @@
 package ru.vitalex.chooseSide;
 
+import github.scarsz.discordsrv.DiscordSRV;
 import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -21,6 +22,7 @@ public final class ChooseSide extends JavaPlugin {
     private static ChooseSide instance;
     private DataHandler dataHandler;
     private LuckPerms luckPerms;
+    private DiscordSRV discordSRV;
 
     @Override
     public void onEnable() {
@@ -45,6 +47,8 @@ public final class ChooseSide extends JavaPlugin {
         new MainCommand();
         Registrator.start();
         Bukkit.getPluginManager().registerEvents(new OpenInterfaceListener(), this);
+
+        DiscordSRV.getPlugin();
     }
 
     private void poolInit(){
@@ -56,11 +60,17 @@ public final class ChooseSide extends JavaPlugin {
     }
 
     private void loadApi(){
-        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
-        if (provider == null) {
+        RegisteredServiceProvider<LuckPerms> providerLp = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+        if (providerLp == null) {
             throw new RuntimeException("LuckPerms не установлен или не загружен!");
         }
-        luckPerms = provider.getProvider();
+        luckPerms = providerLp.getProvider();
+
+        try{
+            discordSRV = DiscordSRV.getPlugin();
+        } catch (RuntimeException e) {
+            throw new RuntimeException("DiscordSRV не установлен или не загружен!");
+        }
     }
 
 
@@ -73,4 +83,6 @@ public final class ChooseSide extends JavaPlugin {
     }
 
     public LuckPerms getLuckPerms() { return luckPerms; }
+
+    public DiscordSRV getDiscordSRV(){ return discordSRV; }
 }

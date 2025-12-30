@@ -7,5 +7,6 @@ database:
   #password:
   synchronize-interval-seconds: 120
 registration-task-interval-seconds: 5
+permissible_superiority: 0.05 #percents
 
 version: 1
